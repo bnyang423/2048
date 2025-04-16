@@ -1,0 +1,83 @@
+import random
+
+# Initialize the game board
+def initialize_board():
+    board = [[0] * 4 for _ in range(4)]
+    add_new_tile(board)
+    add_new_tile(board)
+    return board
+
+# Add a new tile (2 or 4) to a random empty cell
+def add_new_tile(board):
+    empty_cells = [(r, c) for r in range(4) for c in range(4) if board[r][c] == 0]
+    if empty_cells:
+        r, c = random.choice(empty_cells)
+        board[r][c] = random.choice([2, 4])
+
+# Slide and merge a row to the left
+def slide_and_merge_row(row):
+    new_row = [x for x in row if x != 0]
+    for i in range(len(new_row) - 1):
+        if new_row[i] == new_row[i + 1]:
+            new_row[i] *= 2
+            new_row[i + 1] = 0
+    new_row = [x for x in new_row if x != 0]
+    return new_row + [0] * (4 - len(new_row))
+
+# Perform the board movement based on the direction
+def move(board, direction):
+    if direction == 'a':  # Slide left
+        return [slide_and_merge_row(row) for row in board]
+    elif direction == 'd':  # Slide right
+        return [slide_and_merge_row(row[::-1])[::-1] for row in board]
+    elif direction == 'w':  # Slide up
+        return list(map(list, zip(*move(list(map(list, zip(*board))), 'a'))))
+    elif direction == 's':  # Slide down
+        return list(map(list, zip(*move(list(map(list, zip(*board))), 'd'))))
+
+# Check if the game is over (no moves left)
+def is_game_over(board):
+    for row in board:
+        if 0 in row or any(row[i] == row[i + 1] for i in range(3)):
+            return False
+    for col in zip(*board):
+        if any(col[i] == col[i + 1] for i in range(3)):
+            return False
+    return True
+
+# Print the game board
+def print_board(board):
+    for row in board:
+        print('\t'.join(str(x) if x != 0 else '.' for x in row))
+    print()
+
+# Get the player's move input
+def get_move_input():
+    move = input("Enter move (w for up, s for down, a for left, d for right, q to quit): ").strip().lower()
+    if move in ['w', 's', 'a', 'd']:
+        return move
+    elif move == 'q':  # Quit the game
+        print("Thanks for playing! Goodbye!")
+        exit()
+    else:
+        print("Invalid input. Try again.")
+        return get_move_input()
+
+# Main game loop
+def play_2048():
+    board = initialize_board()
+    while not is_game_over(board):
+        print_board(board)
+        move_input = get_move_input()
+        new_board = move(board, move_input)
+        if new_board != board:
+            board = new_board
+            add_new_tile(board)
+        else:
+            print("Move not possible. Try a different direction.")
+    print_board(board)
+    print("Game Over!")
+
+# Entry point
+if __name__ == "__main__":
+    play_2048()
